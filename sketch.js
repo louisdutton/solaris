@@ -27,23 +27,24 @@ var reverb, fm, env, vib;
 
 // Audio
 var isPlaying = false;
-var decay = .99;
-var gain = .01;
+var decay = .9;
+var gain = .05;
 var baseFreq = 55;
-var attenuation = 1000;
+var attenuation = 500;
 
 // Time
 var hour, day, month, year;
 var zoom;
 
 // Graphics
-var resolution = 24; // resolution;
+var resolution = 3; // resolution;
 var rotation; 
+var font;
 
 // Orbit
 var sunSize = 50;
-var planetSize = 10;
-var planetCount = 16;
+var planetSize = 5;
+var planetCount = 24;
 var planets = {};
 const RADIAL_SPACING = 10;
 const ANGULAR_VELOCITY = .001;
@@ -51,6 +52,10 @@ const ANGULAR_VELOCITY = .001;
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+}
+
+function preload() {
+  font = loadFont ('assets/forum.ttf');
 }
 
 function setup() {
@@ -63,9 +68,10 @@ function setup() {
   angleMode(DEGREES);
 
   reverb = new p5.Reverb();
+  reverb.set(3);
 
-  vib = new p5.Oscillator(10);
-  vib.amp(10);
+  vib = new p5.Oscillator(8);
+  vib.amp(2);
   vib.start();
   vib.disconnect();
   
@@ -75,28 +81,41 @@ function setup() {
     osc.freq(baseFreq * (i+1));
     osc.freq(vib);
     osc.connect(reverb);
-    var size = planetSize * (1+random());
+    var size = planetSize * (random(.5, 2));
     planets[i] = new Planet(i+1, size, resolution, osc);
   }
 
   // Camera
   cam = new CameraController();
   setCamera(cam.cam);
+
+  // text
+  textFont(font);
+  textSize(50);
+  textAlign(CENTER, CENTER);
 }
+
 
 function draw() {
   // Background
   background('#222');
-  noFill();
-  var c = color(255, 255, 255, 164);
-  stroke(c);
-  strokeWeight(.25);
 
-  // camera
+  // Text
+  fill(255);
+  stroke(255);
+  text('SOLARIS', 0, -100);
+
+   // camera
   cam.update();
 
   // Shapes
-  push()
+  noFill();
+  var c = color(255, 255, 255, 164);
+  stroke(c);
+  strokeWeight(.5);
+
+  push();
+  rotateY(frameCount / sunSize);
   sun();
   pop();
 
@@ -136,7 +155,8 @@ class Planet {
     this.velocity = createVector(index / 100, index / 100);
     this.offset = random(0, 360);
     this.freq = oscillator.freq;
-    this.amp = gain * pow(decay, index);
+    // this.amp = gain * pow(decay, index + 1);
+    this.amp = gain / planetCount;
     this.distance = 0;
   }
 
@@ -144,16 +164,16 @@ class Planet {
     var v = this.velocity;
     // if
     // var v = month / 12 * 360;
-    var x = v.x * frameCount;
-    var y = v.y * frameCount;
+    var x = v.x * frameCount + this.seed;
+    var y = v.y * frameCount + this.seed;
     // var z = cos(v + this.offset);
     var pos = sphereCoords(this.r, x, y);
 
     // Doppler effect !!! NOT WORKING
-    var doppler = y;
-    // print(y);
-    var freq = this.freq * doppler;
-    this.osc.freq(freq);
+    // var doppler = y;
+    // // print(y);
+    // var freq = this.freq * doppler;
+    // this.osc.freq(freq);
 
     // Spatialisation
     var dist = p5.Vector.dist(pos, cam.position);
@@ -162,6 +182,7 @@ class Planet {
 
     push();
     translate(pos);
+    rotateY(frameCount / this.size);
     sphere(this.size, this.res, this.res);
     pop();
   }
@@ -189,7 +210,7 @@ class CameraController {
   }
 
   zoom(direction) {
-    this.distance += this.zoomSpeed * direction;
+    this.distance = constrain(this.distance + this.zoomSpeed * direction, 400, 1000);
     this.position = sphereCoords(this.distance, this.theta, this.phi);
   }
 
