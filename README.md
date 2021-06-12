@@ -1,2 +1,2 @@
-# solaris
+# Solaris
 an interactive audio-visual composition
