@@ -1,9 +1,7 @@
 html, body {
-  margin: 0;
+  text-align: center;
+  color: #2c3e50;
   padding: 0;
+  margin: 0;
   overflow: hidden;
-}
-
-canvas {
-  display: block;
 }
