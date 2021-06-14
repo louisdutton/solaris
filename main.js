@@ -1,8 +1,43 @@
 import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Sphere } from 'three';
-import * as Tone from 'tone';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass';
+
+class CelestialBody {
+  constructor(harmonic, radius = 1, padding = 5) {
+    this.harmonic = harmonic;
+    var sphere = new THREE.SphereGeometry(radius, 32, 32);
+    this.mesh = new THREE.Mesh(sphere, material);;
+    this.sound = new THREE.PositionalAudio(listener);
+    this.osc = listener.context.createOscillator();
+    this.osc.type = 'sine';
+    this.baseFreq = 55 * harmonic;
+    this.osc.frequency.setValueAtTime(this.baseFreq, this.sound.context.currentTime);
+    this.osc.start(0);
+    this.sound.setNodeSource(this.osc);
+    this.sound.setRefDistance(10);
+    this.sound.setVolume(gain * Math.pow(0.9, harmonic));
+    this.mesh.add(this.sound);
+    var phi = Math.random() * Math.PI;
+    var theta = Math.random() * Math.PI;
+    this.orbit = new THREE.Spherical(harmonic * padding, phi, theta);
+    this.mesh.position.setFromSpherical(this.orbit);
+    this.angularVelocity = { x: .01 * harmonic, y: 0 } ;
+
+    scene.add(this.mesh);
+  }
+
+  update() {
+    var t = this.sound.context.currentTime;
+    // this.mesh.rotation.x += 0.01;
+    this.orbit.phi += this.angularVelocity.x;
+    this.mesh.position.setFromSpherical(this.orbit);
+    this.osc.frequency.setValueAtTime(this.baseFreq + 1 * Math.sin(t * 12), t)
+  }
+}
 
 //#region Init
 
@@ -13,7 +48,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, .1, 1000);
 camera.position.setZ(30);
 
-// renderer
+// main renderer
 const renderer = new THREE.WebGLRenderer({
   canvas: document.querySelector('#bg'),
   antialias: true,
@@ -23,54 +58,54 @@ renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.render(scene, camera);
 
-// const composer = new THREE.Composer
-
-// geometry
-const torus = new THREE.TorusGeometry(10, 3, 16, 100);
-const sphere = new THREE.SphereGeometry(10, 32, 32);
+// rendering stack (post-processing)
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass({x: 256, y: 256}, 2, 0, .75));
+// composer.addPass(new AfterimagePass());
 
 // materials
-const material = new THREE.MeshBasicMaterial({ wireframe: false });
-
-// mesh
-const mesh = new THREE.Mesh(sphere, material);
+const material = new THREE.MeshBasicMaterial({ wireframe: false, opacity: .1});
 
 // Audio
 const listener = new THREE.AudioListener();
 camera.add(listener);
+const gain = .2;
 
-const sound = new THREE.PositionalAudio(listener);
-const oscillator = listener.context.createOscillator();
-oscillator.type = 'sine';
-oscillator.start(0);
-sound.setNodeSource(oscillator);
-sound.setRefDistance(20);
-sound.setVolume(0.1);
-mesh.add(sound);
-
-// events & controls
+// user interaction
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.minDistance = 10;
+controls.maxDistance = 200;
 window.addEventListener('resize', onWindowResize, false);
 window.addEventListener('pointerdown', onMouseDown, false);
 
 //#endregion
 
-scene.add(mesh);
-animate();
+const origin = {x: 0, y: 0, z: 0};
 
-function animate() {
-  requestAnimationFrame(animate);
+// create celestial bodies
+const sun = new CelestialBody(0, 4);
 
-  // mesh.rotation.x += 0.01;
-  var time = sound.context.currentTime;
-  oscillator.frequency.setValueAtTime(440 + Math.sin(time * 40) * 8, time);
+var planetCount = 12;
+var planets = [];
+for (var i = 0; i < planetCount; i++) { planets.push(new CelestialBody(i+1)); }
+
+// start update loop
+update();
+
+function update() {
+  requestAnimationFrame(update);
+ 
+  for (var i = 0; i < planets.length; i++) {
+    planets[i].update();
+  }
 
   controls.update();
 
-  renderer.render(scene, camera);
+  composer.render();
 }
 
-//#region Events
+//#region event handlers
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -84,3 +119,4 @@ function onMouseDown(e) {
 }
 
 //#endregion
+
