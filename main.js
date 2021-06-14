@@ -7,9 +7,9 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 // import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass';
 
 class CelestialBody {
-  constructor(harmonic, radius = 1, padding = 5) {
+  constructor(harmonic, radius = 2, padding = 5) {
     this.harmonic = harmonic;
-    var sphere = new THREE.SphereGeometry(radius, 32, 32);
+    var sphere = new THREE.SphereGeometry(radius, 8, 8);
     this.mesh = new THREE.Mesh(sphere, material);;
     this.sound = new THREE.PositionalAudio(listener);
     this.osc = listener.context.createOscillator();
@@ -25,14 +25,14 @@ class CelestialBody {
     var theta = Math.random() * Math.PI;
     this.orbit = new THREE.Spherical(harmonic * padding, phi, theta);
     this.mesh.position.setFromSpherical(this.orbit);
-    this.angularVelocity = { x: .01 * harmonic, y: 0 } ;
+    this.angularVelocity = { x: .005 * harmonic, y: 0 } ;
 
     scene.add(this.mesh);
   }
 
   update() {
     var t = this.sound.context.currentTime;
-    // this.mesh.rotation.x += 0.01;
+    this.mesh.rotation.x += 0.01;
     this.orbit.phi += this.angularVelocity.x;
     this.mesh.position.setFromSpherical(this.orbit);
     this.osc.frequency.setValueAtTime(this.baseFreq + 1 * Math.sin(t * 12), t)
@@ -61,11 +61,11 @@ renderer.render(scene, camera);
 // rendering stack (post-processing)
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-composer.addPass(new UnrealBloomPass({x: 256, y: 256}, 2, 0, .75));
+// composer.addPass(new UnrealBloomPass({x: 512, y: 512}, 2, 0, .75));
 // composer.addPass(new AfterimagePass());
 
 // materials
-const material = new THREE.MeshBasicMaterial({ wireframe: false, opacity: .1});
+const material = new THREE.MeshBasicMaterial({ wireframe: true, opacity: .1});
 
 // Audio
 const listener = new THREE.AudioListener();
@@ -76,6 +76,7 @@ const gain = .2;
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.minDistance = 10;
 controls.maxDistance = 200;
+controls.enablePan = false;
 window.addEventListener('resize', onWindowResize, false);
 window.addEventListener('pointerdown', onMouseDown, false);
 
@@ -96,6 +97,7 @@ update();
 function update() {
   requestAnimationFrame(update);
  
+  sun.update();
   for (var i = 0; i < planets.length; i++) {
     planets[i].update();
   }
