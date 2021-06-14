@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
-import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass';
+// import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass';
 
 class CelestialBody {
   constructor(harmonic, radius = 1, padding = 5) {
