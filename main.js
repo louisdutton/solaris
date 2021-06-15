@@ -79,6 +79,8 @@ controls.maxDistance = 200;
 controls.enablePan = false;
 window.addEventListener('resize', onWindowResize, false);
 window.addEventListener('pointerdown', onMouseDown, false);
+window.addEventListener('focus', onFocus, false);
+window.addEventListener('blur', onBlur, false);
 
 //#endregion
 
@@ -120,5 +122,12 @@ function onMouseDown(e) {
   listener.context.resume();
 }
 
+function onFocus() {
+  listener.context.resume();
+}
+
+function onBlur() {
+  listener.context.suspend();
+}
 //#endregion
 
