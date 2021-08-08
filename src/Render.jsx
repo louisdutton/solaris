@@ -4,8 +4,26 @@ import { Line, OrbitControls, Stars } from '@react-three/drei'
 import * as THREE from 'three'
 import styled from 'styled-components'
 import Freeverb from 'freeverb'
+import {Shaders} from './shaders'
 
-const orbitCount = 16
+// https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
+function mulberry32(a) {
+  return function() {
+    var t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+const seed = 0
+const random = mulberry32(seed)
+
+const orbitCount = Math.round(random() * 32)
+const fundamental = 32 + random() * 408
+
+var atmosphereShader = Shaders['atmosphere'];
+// var uniforms = THREE.UniformsUtils.clone(atmosphereShader.uniforms);
+
 
 // const AudioContext = window.AudioContext || window.webkitAudioContext
 const listener = new THREE.AudioListener()
@@ -17,33 +35,24 @@ reverb.wet.value = 1.0
 reverb.dry.value = 0.0
 listener.setFilter(reverb)
 listener.setMasterVolume(0.01)
-// listener.maxDistance = 1
 const rolloff = 0.3
-
-// https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
-function mulberry32(a) {
-  return function() {
-    var t = a += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  }
-}
-const seed = 1
-const random = mulberry32(seed)
 
 function Star(props) {
   // This reference will give us direct access to the THREE.Mesh object
   const mesh = useRef()
   const t = 0.1;
   const index = props.index || 0
+  const [color, setColor] = useState()
   // const sound = useState()
-  
+  const [hovered, setHover] = useState(false)
+
   useEffect(() => {
+    setColor(0xffffff * random())
+
     var osc = ctx.createOscillator()
-    osc.frequency.value = 32 + 32 * index
+    osc.frequency.value = fundamental + fundamental * index
     osc.start()
-    osc.type = 'triangle'
+    // osc.type = 'triangle'
 
     var sound = new THREE.PositionalAudio(listener)
     sound.setRolloffFactor(rolloff)
@@ -51,15 +60,9 @@ function Star(props) {
     mesh.current.add(sound)
   },[])
 
-  // Set up state for the hovered and active state
-  const [hovered, setHover] = useState(false)
-  // Subscribe this component to the render-loop, rotate the mesh every frame
+  
+
   useFrame((state, delta) => {
-    // mesh.current.rotation.z += 0.001
-
-    // console.log(osc)
-    // oscillators[index].frequency.value += 0.1
-
     // scale
     var targetScale = hovered ? props.scale * 1.1 : props.scale
     var currentScale = mesh.current.scale.x
@@ -70,11 +73,11 @@ function Star(props) {
   })
 
   var onPointerOver = (e) => {
-    // setHover(true)
+    setHover(true)
   }
 
   var onPointerOut = (e) => {
-    // setHover(false)
+    setHover(false)
   }
   
   return (
@@ -84,8 +87,19 @@ function Star(props) {
       onPointerOver={onPointerOver}
       onPointerOut={onPointerOut}
     >
+      <mesh scale={1.1}>
+        <sphereGeometry args={[1, 32, 32]} />
+        <shaderMaterial
+        // uniforms={uniforms}
+        vertexShader={atmosphereShader.vertexShader}
+        fragmentShader={atmosphereShader.fragmentShader}
+        side={THREE.BackSide}
+        blending={THREE.AdditiveBlending}
+        transparent={true}/>
+      </mesh>
       <sphereGeometry args={[1, 32, 32]} />
-      <meshToonMaterial color={props.color || 'orange'}/>
+      <meshStandardMaterial color={props.color || color} 
+      />
     </mesh>
   )
 }
@@ -130,7 +144,6 @@ function Orbit(props) {
         index={props.index || 0}
         position={position}
         scale={0.25} 
-        color={props.color || 'lightblue'}
         frequency={props.frequency}
       />
     </>
@@ -163,7 +176,7 @@ function SolarSystem () {
 
   return (
     <>
-      <Star scale={1} />
+      <Star scale={1} color={'orange'}/>
 
       {orbitRings(orbitCount)}
     </>
@@ -177,8 +190,9 @@ export default function Render() {
       dpr={ window.devicePixelRatio }
       camera={{fov: 60, aspect: window.innerWidth/window.innerHeight, position: [5, 0, 0]}}
     >
-      <OrbitControls maxDistance={25} minDistance={5} enablePan={false} enableZoom={true} enableRotate={true} />
-      <pointLight position={[10, 10, 10]} intensity={1.5} color={'white'}/>
+      <OrbitControls maxDistance={50} minDistance={5} enablePan={false} enableZoom={true} enableRotate={true} />
+      <ambientLight intensity={0.1}/>
+      <pointLight intensity={10} color={'orange'}/>
       <Stars fade factor={10}/>
       <SolarSystem/>
     </Canvas>
