@@ -7,11 +7,11 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@react-three/drei": "^7.2.2",
-    "@react-three/fiber": "^7.0.6",
-    "@react-three/postprocessing": "^2.0.5",
     "freeverb": "^1.1.2",
+    "glsl-noise": "^0.0.0",
+    "glslify": "^7.1.1",
     "react": "^17.0.0",
+    "react-anime": "^4.0.4",
     "react-dom": "^17.0.0",
     "react-icons": "^4.2.0",
     "styled-components": "^5.3.0",

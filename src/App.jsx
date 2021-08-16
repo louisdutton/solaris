@@ -1,61 +1,74 @@
-import React, { useState, useRef } from 'react'
-import styled from 'styled-components'
-import './App.css'
-import Render from './Render'
-import GUI from './GUI'
+import React, { useState, useEffect } from 'react'
 import { FaPlay } from 'react-icons/fa'
+import Anime from 'react-anime'
+import * as SOLARIS from './solaris'
+import './App.css'
 
-const Title = styled.h1`
-  font-size: 8em;
-  font-weight: light;
-  position: absolute;
-  left: 50%;
-  bottom: 50%;
-  transform: translate(-50%, 50%);
-  user-select: none;
-  cursor: default;
-  opacity: 0;
-  animation: fade-in 3s forwards 2s;
-  text-shadow: 0 0 15px #CCC;
-  margin: 0;
-`
 
-const Wrapper = styled.div`
-  opacity: 0;
-  animation: fade-in 3s forwards 0.5s;
-`
-
-const StartWrapper = styled.div`
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
 
 export default function App() {
-  const [state, setState] = useState({start: false})
+  const [state, setState] = useState({
+    system: null,
+    start: false,
+  })
+
+  useEffect(() => {
+    state.system = new SOLARIS.SolarSystem(12, 44)
+  }, [])
 
   const onStart = () => {
     setState({start: true})
-    window.requestFullscreen();
+    state.system.start()
   }
-    
-  // Hasn't launched yet
-  if (!state.start) return (
-    <StartWrapper>
-      <button onClick={onStart}>
-        <FaPlay/>
-      </button>
-    </StartWrapper>
+
+  return (
+    <div className='app'>
+      <div id='solaris'/>
+      {!state.start && <StartButton onStart={onStart}/>}
+    </div>
+  )
+}
+
+const StartButton = ({onStart}) => (
+  <Anime easing={'easeOutElastic'} duration={1000} delay={250} scale={[0, 1]}>
+    <button className='start-button' onClick={() => onStart()}>
+      <FaPlay/>
+    </button>
+  </Anime>
+)
+
+
+
+function Header(props) {
+  const [visible, setVisible] = useState(true)
+  const delay = 10250
+  const easeIn = 'easeInOutQuad'
+  const easeOut = 'easeInOutExpo'
+
+  useEffect(() => {
+    setTimeout(() => {
+      setVisible(false)
+    }, delay)
+  }, [delay])
+
+  const calcDelay = (el, i) => 150 * (i+1)
+
+  const splitText = (text) => (
+    <Title aria-label={text}>
+      <Anime easing={easeIn} duration={2250} delay={calcDelay} scale={[0.9, 1]}opacity={[0, 1]}
+      >
+        {text.split('').map(function(char, index){
+          return (
+            <Anime easing={easeOut} duration={8000} delay={1000} opacity={0} key={index}>
+             {char}
+            </Anime>
+          )
+        })}
+      </Anime>
+    </Title>
   )
 
-  // Start Button Pressed
-  return (
-    <Wrapper>
-      <Render callback={(e) => console.log(e)}/>
-      <Title>SOLARIS</Title>
-      <GUI/>
-    </Wrapper>
-  )
+  return visible
+    ? splitText('SOLARIS')
+    : <div/>
 }

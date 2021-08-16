@@ -7,6 +7,22 @@ svg {
   transform: translate(-50%, -50%);
 }
 
+h1 {
+  font-size: 8em;
+  font-weight: light;
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  transform: translate(-50%, 50%);
+  user-select: none;
+  cursor: default;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: row;
+  text-shadow: 0 0 10px white;
+  margin: 0;
+}
+
 button {
   position: absolute;
   opacity: 50%;
@@ -21,6 +37,32 @@ button {
 button:hover {
   opacity: 100%;
   transform: scale(1.1);
+}
+
+.start-button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.start-button:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#solaris {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  /* z-index: 10; */
 }
 
 @keyframes fade-in {

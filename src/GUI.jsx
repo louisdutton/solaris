@@ -10,7 +10,13 @@ const InfoWrapper = styled.div`
   top: 5%;
 `
 
-export default function GUI() {
+export default function GUI(props) {
+  const onChange = (e) => {
+    var v = parseInt(e.target.value)
+    if (isNaN(v)) return
+    props.setSeed(v)
+  }
+
   return (<>
       <InfoWrapper>
         <button onClick={() => console.log('test')}>
