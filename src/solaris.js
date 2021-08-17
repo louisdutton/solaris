@@ -5,6 +5,9 @@ import fragStar from './shaders/star.frag?raw'
 import vertStar from './shaders/star.vert?raw'
 import fragGlow from './shaders/glow.frag?raw'
 import vertGlow from './shaders/glow.vert?raw'
+import fragAtmosphere from './shaders/atmosphere.frag?raw'
+import vertAtmosphere  from './shaders/atmosphere.vert?raw'
+import anime from 'animejs'
 
 const materials = {
   star: new THREE.ShaderMaterial({
@@ -32,6 +35,18 @@ const materials = {
     blending: THREE.AdditiveBlending,
     transparent: true
   }),
+  atmosphere: new THREE.ShaderMaterial({
+    uniforms: {
+      color: {type: 'vec3', value: new THREE.Color('cyan')},
+      exponent: {type: 'float', value: 4.0},
+      falloff: {type: 'float', value: 0.5},
+    },
+    vertexShader: vertAtmosphere,
+    fragmentShader: fragAtmosphere,
+    side: THREE.BackSide,
+    blending: THREE.AdditiveBlending,
+    transparent: true
+  }),
 }
 
 export class SolarSystem {
@@ -55,41 +70,49 @@ export class SolarSystem {
     // Reverb
     var reverb = this.reverb = new Freeverb(ctx)
     reverb.roomSize = 0.9
-    reverb.dampening = 500
+    reverb.dampening = 3000
     reverb.dry.value = 0.0
-    reverb.wet.value = 0.5
-    listener.setFilter(reverb)
-
-    // Filtered noise (for textural ambience)
-    var filter = this.noiseFilter = ctx.createBiquadFilter()
-    filter.type = 'lowpass'
-    filter.Q.value = 0.7
-    filter.frequency.value = 200
-    // this.noiseFilter.connect(this.reverb)
-
-    var noise = noise = ctx.createBufferSource()
-    noise.buffer = whiteNoiseBuffer(1, ctx, 0.02)
-    noise.loop = true
-    noise.start()
-    noise.connect(filter)
+    reverb.wet.value = 1.0
+    // listener.setFilter(reverb)
     
     // Lighting
-    scene.add(new THREE.PointLight('orange', 2, 10))
+    scene.add(new THREE.PointLight('orange', 2, 50))
     // scene.add(new THREE.AmbientLight('white', 0.1))
 
     // Random function with seed: 0
     this.random = mulberry32(0)
-    this.camera.position.x = 5
+    anime({
+      targets: this.camera.position,
+      z: [1000, 10],
+      easing: 'easeOutExpo',
+      // loop: true,
+      // direction: 'alternate',
+      duration: 3000,
+    });
+    
+    // Stars
+    const starGeometry = new THREE.BufferGeometry()
+    const starCount = 5000;
+    const posArray = new Float32Array(starCount * 3)
+    const starScale = 300
+    const starMaterial = new THREE.PointsMaterial({size: 0.1})
+
+    for (let i = 0; i < starCount; i++) {
+      posArray[i] = (this.random() - 0.5) * starScale
+      
+    }
+
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3))
+    scene.add(new THREE.Points(starGeometry, starMaterial))
 
     // Sun
-    this.sun = new Sun(listener, 0, F0, this.random, 1)
+    this.sun = new Sun(listener, F0)
     scene.add(this.sun.mesh)
-    scene.add(this.sun.glow)
 
     // Celestial bodies
     this.celestialBodies = []
     for (let i = 1; i < size; i++) {
-      var body = this.celestialBodies[i] = new CelestialBody(listener, i, F0, this.random, 0.25)
+      var body = this.celestialBodies[i] = new Planet(listener, i, F0, this.random)
       scene.add(body.mesh)
     }
 
@@ -101,12 +124,16 @@ export class SolarSystem {
     // Controls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.minDistance = 10;
+    // this.controls.maxDistance = 100;
 
     // Update
     this.time = 0
     this.update = () => {
       requestAnimationFrame(this.update)
 
+      // this.sun.update()
       this.celestialBodies.forEach(body => body.update())
 
       this.time += 0.001
@@ -115,10 +142,10 @@ export class SolarSystem {
       this.controls.update()
       this.renderer.render( this.scene, this.camera )
     }
-    this.update()
   }
   start() {
-    this.master.gain.linearRampToValueAtTime(0.005, this.ctx.currentTime + 1)
+    this.ctx.resume()
+    this.master.gain.linearRampToValueAtTime(0.005, this.ctx.currentTime + 3)
     document.getElementById('solaris').replaceWith(this.renderer.domElement)
     this.update()
   }
@@ -135,57 +162,95 @@ export class SolarSystem {
 }
 
 export class CelestialBody {
-  constructor(listener, index, fundamental, random, scale) {
-    // Gain
-    var gain = listener.context.createGain()
-    gain.gain.value = Math.pow(0.5 + 0.25, index)
-
+  constructor(listener, frequency, object3D) {
     // Oscillator
     var osc = listener.context.createOscillator() // default sine wave
-    osc.frequency.value = fundamental + index * fundamental // harmonic series
-    osc.connect(gain)
+    osc.frequency.value = frequency // harmonic series
     osc.start()
 
     // Positional audio source (three.js) attenuation model: 1/x
     var sound = new THREE.PositionalAudio(listener)
-    sound.setRolloffFactor(0.25)
-    sound.setNodeSource(gain)
+    sound.setRolloffFactor(0.4)
+    sound.setNodeSource(osc)
+    sound.panner.panningModel = 'equalpower'
 
     this.audio = {
-      gain: gain,
       osc: osc,
       sound: sound
     }
+  
+    this.mesh = object3D
+    this.mesh.add(sound)
+  }
+
+  update() {
+    this.mesh.rotation.x += 0.002
+  }
+}
+
+class Planet extends CelestialBody {
+  constructor(listener, index, fundamental, random) {
+    // randomly generated values
+    var color = 0xffffff * random()
+    var scale = 0.5 * random()
+    var details = [8, 2, 1]
 
     var texture = new THREE.TextureLoader().load('/src/moonbump1k.jpg')
-    var mesh = this.mesh = new THREE.Mesh(
-      new THREE.IcosahedronBufferGeometry(scale, 8), 
-      new THREE.MeshStandardMaterial({bumpMap: texture, bumpScale: 0.008, color: 0xffffff * random()})
-    )
+    var options = [
+      {bumpMap: texture, bumpScale: 0.008, color: color},
+      {color: color},
+      {color: color},
+    ]
 
-    mesh.add(sound)
+    // LODs (level of detail)
+    var lod = new THREE.LOD()
+    for (var i = 0; i < 3; i++) {
+      var geometry = new THREE.IcosahedronBufferGeometry(scale, details[i])
+      var material = new THREE.MeshStandardMaterial(options[i])
+      lod.addLevel(new THREE.Mesh(geometry, material), 25 * i)
+    }
 
-    this.orbit = new THREE.Spherical(index, random()*Math.PI*2, 0)
-    mesh.position.x = this.orbit.radius
-    
+    // atmosphere
+    var material = materials.atmosphere.clone();
+    material.uniforms.color.value = new THREE.Color(color)
+
+    lod.add(new THREE.Mesh(
+      new THREE.IcosahedronBufferGeometry(scale * 1.1, 4), 
+      material
+    ))
+
+    // call parent
+    super(listener, fundamental + index * fundamental, lod)
+
+    // orbit
+    var rand = random()*Math.PI*2
+    this.orbit = new THREE.Spherical(index, rand, 0)
+    lod.position.x = this.orbit.radius
   }
 
   update() {
     this.orbit.phi += 0.001
     this.mesh.position.setFromSpherical(this.orbit)
-    this.mesh.rotation.x += 0.002
   }
 }
 
-export class Sun extends CelestialBody {
-  constructor(...args) {
-    super(...args)
-    this.mesh.material = materials.star
-     // glow
-    this.glow = new THREE.Mesh(
-      new THREE.IcosahedronBufferGeometry(1.25, 8), 
-      materials.glow
-    )
+class Sun extends CelestialBody {
+  constructor(listener, fundamental) {
+    // var options = [
+    //   {bumpMap: texture, bumpScale: 0.008, color: color},
+    //   {color: color},
+    //   {color: color},
+    // ]
+
+    var geometry = new THREE.IcosahedronBufferGeometry(1, 4)
+    var material = materials.star
+    var mesh = new THREE.Mesh(geometry, material)
+
+    // glow
+    var glow = new THREE.Mesh(new THREE.IcosahedronBufferGeometry(1.25, 4), materials.glow)
+    mesh.add(glow)
+
+    super(listener, fundamental, mesh)
   }
 }
 

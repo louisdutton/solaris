@@ -1,6 +1,8 @@
 uniform sampler2D pointTexture;
 uniform float fade;
+
 varying vec3 vColor;
+
 void main() {
   float opacity = 1.0;
   if (fade == 1.0) {

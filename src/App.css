@@ -8,8 +8,9 @@ svg {
 }
 
 h1 {
-  font-size: 8em;
-  font-weight: light;
+  font-size: calc(16px + 12vw);
+  font-weight: 10;
+  font-style: none;
   position: absolute;
   left: 50%;
   bottom: 50%;
@@ -29,8 +30,8 @@ button {
   transition: all 0.3s;
   border: none;
   background: none;
-  height: 40px;
-  width: 40px;
+  height: 50px;
+  width: 50px;
   color: white;
 }
 
@@ -62,7 +63,6 @@ button:hover {
   position: absolute;
   width: 100vw;
   height: 100vh;
-  /* z-index: 10; */
 }
 
 @keyframes fade-in {

@@ -1,3 +1,14 @@
+varying vec3 vNormalW;
+varying vec3 vPositionW;
+
+uniform vec3 color;
+uniform float falloff;
+uniform float exponent;
+uniform float time;
+uniform int octaves;
+uniform float lacunarity;
+uniform float persistence;
+
 //	Simplex 4D Noise 
 //	by Ian McEwan, Ashima Arts
 //
@@ -149,21 +160,6 @@ float snoiseFractal(vec3 m) {
 				+0.0666667* snoise(8.0*m);
 }
 
-varying vec3 vNormal;
-varying vec3 vNormalW;
-varying vec3 vPosition;
-varying vec3 vPositionW;
-varying vec2 vUv;
-
-uniform vec3 color;
-uniform float falloff;
-uniform float exponent;
-uniform float time;
-uniform int octaves;
-uniform float lacunarity;
-uniform float persistence;
-
-
 // fractal brownian motion using simplex noise
 float fbm(vec4 p) {
   float sum = 0.;
@@ -192,7 +188,7 @@ vec3 sunColor(float b) {
 }
 
 void main() {
-  float noise = fbm(vec4(vPosition, time));
+  float noise = fbm(vec4(vPositionW, time));
   float fres = fresnel();
   float brightness = noise + fres;
   vec3 col = sunColor(brightness);

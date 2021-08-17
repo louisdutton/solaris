@@ -4,8 +4,6 @@ import Anime from 'react-anime'
 import * as SOLARIS from './solaris'
 import './App.css'
 
-
-
 export default function App() {
   const [state, setState] = useState({
     system: null,
@@ -13,11 +11,12 @@ export default function App() {
   })
 
   useEffect(() => {
-    state.system = new SOLARIS.SolarSystem(12, 44)
+    
   }, [])
 
   const onStart = () => {
     setState({start: true})
+    state.system = new SOLARIS.SolarSystem(8, 55)
     state.system.start()
   }
 
@@ -25,6 +24,7 @@ export default function App() {
     <div className='app'>
       <div id='solaris'/>
       {!state.start && <StartButton onStart={onStart}/>}
+      {/* {state.start && <Header/>} */}
     </div>
   )
 }
@@ -43,7 +43,7 @@ function Header(props) {
   const [visible, setVisible] = useState(true)
   const delay = 10250
   const easeIn = 'easeInOutQuad'
-  const easeOut = 'easeInOutExpo'
+  const easeOut = 'easeInQuad'
 
   useEffect(() => {
     setTimeout(() => {
@@ -54,18 +54,18 @@ function Header(props) {
   const calcDelay = (el, i) => 150 * (i+1)
 
   const splitText = (text) => (
-    <Title aria-label={text}>
-      <Anime easing={easeIn} duration={2250} delay={calcDelay} scale={[0.9, 1]}opacity={[0, 1]}
+    <h1 aria-label={text}>
+      <Anime easing={easeIn} duration={2250} delay={calcDelay} opacity={[0, 1]}
       >
         {text.split('').map(function(char, index){
           return (
-            <Anime easing={easeOut} duration={8000} delay={1000} opacity={0} key={index}>
+            <Anime easing={easeOut} duration={5000} delay={1000} opacity={0} key={index}>
              {char}
             </Anime>
           )
         })}
       </Anime>
-    </Title>
+    </h1>
   )
 
   return visible
