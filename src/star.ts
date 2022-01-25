@@ -1,11 +1,11 @@
 import * as THREE from "three";
 import { Random } from "./global";
 
-interface SpectralClassification {
-	mk: "O" | "B" | "A" | "F" | "G" | "K" | "M"; // morgan-keenan type
-	numeral: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9; // arabic numeral sub-classification
-	yerkes: "V"; // main sequence luminosity
-}
+// interface SpectralClassification {
+// 	mk: "O" | "B" | "A" | "F" | "G" | "K" | "M"; // morgan-keenan type
+// 	numeral: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9; // arabic numeral sub-classification
+// 	yerkes: "V"; // main sequence luminosity
+// }
 
 const TEMPERATURE_RANGE = [2400, 35000];
 import * as MAT from "./materials";
