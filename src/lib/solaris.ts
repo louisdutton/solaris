@@ -86,7 +86,7 @@ for (let i = 0; i < starCount; i++) {
 starGeometry.setAttribute("position", new THREE.BufferAttribute(posArray, 3));
 scene.add(new THREE.Points(starGeometry, starMaterial));
 
-const fundamental = 110;
+const fundamental = 55;
 const orbitCount = 5;
 
 // Sun
@@ -98,8 +98,7 @@ const orbits: THREE.Object3D[] = [];
 for (let i = 1; i < orbitCount; i++) {
 	const radius = 1 + i;
 	const orbit = createOrbit(radius);
-	// Random orbital phase
-	orbit.rotation.z = Random.range(0, Math.PI * 2);
+	orbit.rotation.z = Random.range(0, Math.PI * 2); // Random orbital phase
 
 	const body = createCelestialBody(listener, fundamental + fundamental * i);
 	orbit.add(body);
