@@ -43,13 +43,13 @@ export const createCelestialBody = (
 	osc.start();
 
 	// vibrato
-	const vibrato = listener.context.createOscillator();
-	vibrato.frequency.value = 6;
-	vibrato.start();
-	const depth = listener.context.createGain();
-	depth.gain.value = 1;
-	vibrato.connect(depth);
-	depth.connect(osc.frequency);
+	// const vibrato = listener.context.createOscillator();
+	// vibrato.frequency.value = 6;
+	// vibrato.start();
+	// const depth = listener.context.createGain();
+	// depth.gain.value = 1;
+	// vibrato.connect(depth);
+	// depth.connect(osc.frequency);
 
 	// Positional audio source (three.js) attenuation model: 1/x
 	const sound = new THREE.PositionalAudio(listener);
