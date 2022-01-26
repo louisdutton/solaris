@@ -50,11 +50,11 @@ const source = new AudioBufferSourceNode(ctx, {
 	loopStart: 0.25,
 	loopEnd: 15,
 });
-const audioBuffer = await fetch("/audio/whispering.wav")
+fetch("/audio/whispering.wav")
 	.then((res) => res.arrayBuffer())
-	.then((ArrayBuffer) => ctx.decodeAudioData(ArrayBuffer));
+	.then((ArrayBuffer) => ctx.decodeAudioData(ArrayBuffer))
+	.then((data) => (source.buffer = data));
 
-source.buffer = audioBuffer;
 sourceGain.gain.value = 0.025;
 source.connect(sourceGain); // bypass reverb
 sourceGain.connect(ctx.destination);
