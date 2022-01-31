@@ -1,7 +1,7 @@
 # Solaris
 Explore a procedurally generated audio-visual solar system. Listen as the soundscape of orbital harmonics transforms as you move through space and time.
 
-![readme](banner.png)
+![readme](public/og_image.png)
 
 ## Instructions
 Click to start. Use the mouse to expore.
