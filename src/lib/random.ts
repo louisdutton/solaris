@@ -8,8 +8,14 @@ export function mulberry32(a: number) {
 	};
 }
 
-let value = mulberry32(1);
+let value = mulberry32((Math.random() * 10000) << 0);
+
 const range = (min: number, max: number) => min + value() * (max - min);
+
+const within = <T>(array: T[]) => {
+	return array[range(0, array.length) << 0];
+};
+
 const setSeed = (seed: number) => {
 	value = mulberry32(seed);
 };
@@ -18,4 +24,5 @@ export default {
 	value,
 	range,
 	setSeed,
+	within,
 };
