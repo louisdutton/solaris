@@ -40,7 +40,7 @@ export const createCelestialBody = (
 	const osc = listener.context.createOscillator(); // default sine wave
 	osc.type = "sine";
 	osc.frequency.value = frequency; // harmonic series
-	osc.start();
+	// osc.start();
 
 	// vibrato
 	// const vibrato = listener.context.createOscillator();
@@ -53,7 +53,7 @@ export const createCelestialBody = (
 
 	// Positional audio source (three.js) attenuation model: 1/x
 	const sound = new THREE.PositionalAudio(listener);
-	sound.setRolloffFactor(0.4);
+	sound.setRolloffFactor(0.1);
 	// TODO: maybe create a PR to allow multiple node types
 	//@ts-ignore
 	sound.setNodeSource(osc);
