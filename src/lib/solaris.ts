@@ -9,6 +9,10 @@ import * as MAT from "./materials";
 import Random from "./random";
 //@ts-ignore
 import Freeverb from "freeverb";
+import { Choir } from "./choir";
+
+const FUNDAMENTAL = 25.5;
+const ORBIT_COUNT = 5;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -35,29 +39,33 @@ const ctx = listener.context;
 const master = listener.gain;
 master.gain.value = 0;
 
-// Reverb
+// Reverb;
 const reverb = new Freeverb(ctx);
-reverb.roomSize = 0.9;
-reverb.dampening = 2000;
+reverb.roomSize = 0.975;
+reverb.dampening = 3000;
 reverb.dry.value = 0.0;
 reverb.wet.value = 1.0;
 listener.setFilter(reverb);
 
-// Load audio samples
-const sourceGain = ctx.createGain();
-const source = new AudioBufferSourceNode(ctx, {
-	loop: true,
-	loopStart: 0.25,
-	loopEnd: 15,
-});
-fetch("/audio/whispering.wav")
-	.then((res) => res.arrayBuffer())
-	.then((ArrayBuffer) => ctx.decodeAudioData(ArrayBuffer))
-	.then((data) => (source.buffer = data));
+// // Load audio samples
+// const sourceGain = ctx.createGain();
+// const source = new AudioBufferSourceNode(ctx, {
+// 	loop: true,
+// 	loopStart: 0.25,
+// 	loopEnd: 15,
+// });
+// fetch("/audio/whispering.wav")
+// 	.then((res) => res.arrayBuffer())
+// 	.then((ArrayBuffer) => ctx.decodeAudioData(ArrayBuffer))
+// 	.then((data) => (source.buffer = data));
 
-sourceGain.gain.value = 0.025;
-source.connect(sourceGain); // bypass reverb
-sourceGain.connect(ctx.destination);
+// sourceGain.gain.value = 0.1;
+// source.connect(sourceGain); // bypass reverb
+// sourceGain.connect(reverb);
+
+// Choir
+const choir = new Choir(ctx);
+choir.connect(reverb);
 
 // Camera Controls
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -86,21 +94,18 @@ for (let i = 0; i < starCount; i++) {
 starGeometry.setAttribute("position", new THREE.BufferAttribute(posArray, 3));
 scene.add(new THREE.Points(starGeometry, starMaterial));
 
-const fundamental = 55;
-const orbitCount = 5;
-
 // Sun
-const sun = new Star(listener, fundamental);
+const sun = new Star(listener, FUNDAMENTAL);
 scene.add(sun.mesh);
 
 // Generate celestial bodies
 const orbits: THREE.Object3D[] = [];
-for (let i = 1; i < orbitCount; i++) {
+for (let i = 1; i < ORBIT_COUNT; i++) {
 	const radius = 1 + i;
 	const orbit = createOrbit(radius);
 	orbit.rotation.z = Random.range(0, Math.PI * 2); // Random orbital phase
 
-	const body = createCelestialBody(listener, fundamental + fundamental * i);
+	const body = createCelestialBody(listener, FUNDAMENTAL + FUNDAMENTAL * i);
 	orbit.add(body);
 	body.position.x = radius;
 	orbits.push(orbit);
@@ -116,6 +121,9 @@ const update = (orbits: THREE.Object3D[]) => {
 
 	time += 0.001;
 	MAT.star.uniforms.time.value = time;
+
+	// tick choir
+	choir.tick();
 
 	controls.update();
 	composer.render();
@@ -133,7 +141,6 @@ export const handleStart = () => {
 	const app = document.querySelector<HTMLDivElement>("#solaris")!;
 	renderer.domElement.className = "fade-in";
 	app.appendChild(renderer.domElement);
-	source.start();
 
 	// begin update loop
 	update(orbits);
@@ -147,4 +154,12 @@ export const handleBlur = () => {
 
 export const handleFocus = () => {
 	ctx.resume();
+};
+
+export const handleKeyDown = (e: KeyboardEvent) => {
+	console.log(e.code);
+
+	if (e.code === "Space") {
+		choir.test();
+	}
 };
